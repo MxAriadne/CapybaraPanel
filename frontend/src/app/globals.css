@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes breathing {
+  0% {
+      background-position: 0% 50%;
+  }
+  50% {
+      background-position: 100% 50%;
+  }
+  100% {
+      background-position: 0% 50%;
+  }
+}
+
+[class='dark'] .breathing-gradient {
+  animation: breathing 200s ease-in-out infinite;
+  background: linear-gradient(45deg, #12070f, #08182c, #26092b, #1e0614);
+  background-size: 800% 800%;
+  transition: all 1s;
+}
+
+.breathing-gradient {
+  animation: breathing 200s ease-in-out infinite;
+  background: linear-gradient(45deg, #fadcf3, #d0e1f6, #f7ddfc, #f8d0e7);
+  background-size: 800% 800%;
+  transition: all 1s;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Hide scrollbar for IE, Firefox, and older browsers */
+.header-hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: thin;  /* Firefox */
+  overflow-x: visible;
+  overflow-y: visible;
+}
+.header-hide-scrollbar:hover,
+.header-hide-scrollbar:active,
+.header-hide-scrollbar:focus {
+  scrollbar-width: thin; 
+  overflow-x: clip;
+  overflow-y:visible;
+}
