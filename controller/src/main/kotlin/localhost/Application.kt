@@ -1,6 +1,10 @@
 package localhost
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -14,13 +18,8 @@ import java.net.URL
 import java.sql.DriverManager
 
 @Serializable
-data class DatabaseRequest(val query: String)
-
-@Serializable
 data class RequestData(
-    // Flag used represents the action taken by the controller node.
-    // 1 =
-    val flag: Int,
+    val id: Int,
     val name: String,
     val image: String,
     val disk: String,
@@ -30,72 +29,44 @@ data class RequestData(
     val startup: String
 )
 
+val url = "jdbc:postgresql://localhost:5432/"
+val user = "postgres"
+val password = "Cabybara"
+
+val client = HttpClient(CIO)
+
 fun main() {
     embeddedServer(Netty, port = 6969) {
         routing {
-            post("/api/json") {
+            get("/api/commands/{name}/{command}") {
+                if (call.parameters["command"].equals("delete", true)) {
+                    client.get("http://localhost:46449/containers/${call.parameters["name"].toString()}/${call.parameters["command"].toString()}")
+                    deleteRecord(call.parameters["name"].toString())
+                } else {
+                    val response: HttpResponse = client.get("http://localhost:46449/containers/${call.parameters["name"].toString()}/${call.parameters["command"].toString()}")
+                    call.respondText(response.bodyAsText())
+                }
+            }
+            get("/api/stats/{worker}") {
+                call.respondText(sendStats(call.parameters["worker"].toString()))
+            }
+            post("/api/commands/create") {
                 val receivedDataJson = call.receive<String>()
                 val receivedData = Json.decodeFromString<RequestData>(receivedDataJson)
-                println("Received JSON: $receivedData")
-                // Handle the received data here as needed
+                createRecord(receivedData)
             }
-            post("/api/stats") {
+            post("/api/commands/update") {
                 val receivedDataJson = call.receive<String>()
                 val receivedData = Json.decodeFromString<RequestData>(receivedDataJson)
-                println("Received JSON: $receivedData")
-                // Handle the received data here as needed
-            }
-            post("/api/db") {
-                // Take in the database request
-                val receivedDataJson = call.receive<String>()
-                // Decode JSON into DatabaseRequest object
-                val receivedData = Json.decodeFromString<DatabaseRequest>(receivedDataJson)
-                // Debug print
-                println("Received JSON: $receivedData")
-                // Handle database query
-                val records = alterDatabase(receivedData)
-                // Send back to client
-                call.respond(records.toString())
+                updateRecord(receivedData)
             }
         }
     }.start(wait = true)
 }
 
-fun alterDatabase(request: DatabaseRequest): List<Map<String, Any>> {
-    val url = "jdbc:postgresql://localhost:5432/"
-    val user = "postgres"
-    val password = "Cabybara"
-
-    // Establish database connection
-    DriverManager.getConnection(url, user, password).use { connection ->
-        connection.createStatement().use { statement ->
-            // Execute the query
-            val resultSet = statement.executeQuery(request.query)
-
-            // Get metadata to retrieve column names
-            val metaData = resultSet.metaData
-            val columnCount = metaData.columnCount
-            val columnNames = (1..columnCount).map { metaData.getColumnName(it) }
-
-            // Process the results and convert to a list of Map<String, Any?>
-            val records = mutableListOf<Map<String, Any>>()
-            while (resultSet.next()) {
-                val record = mutableMapOf<String, Any>()
-                for (columnName in columnNames) {
-                    val columnValue = resultSet.getObject(columnName)
-                    record[columnName] = columnValue
-                }
-                records.add(record)
-            }
-            return records
-        }
-    }
-}
-
-fun requestStats() {
-    val requestData = DatabaseRequest("SELECT * FROM workers;",)
-    val json = jacksonObjectMapper().writeValueAsString(requestData)
-    val baseUrl = "http://localhost:46449/api/db"
+fun sendStats(worker: String): String {
+    val json = jacksonObjectMapper().writeValueAsString(worker)
+    val baseUrl = "http://localhost:46449/containers/${worker}"
 
     val url = URL(baseUrl)
     val connection = url.openConnection() as HttpURLConnection
@@ -104,5 +75,41 @@ fun requestStats() {
     connection.setRequestProperty("Content-Type", "application/json")
     connection.outputStream.use { outputStream ->
         outputStream.write(json.toByteArray())
+    }
+
+    val response = connection.inputStream.bufferedReader().use { it.readText() }
+    return response
+}
+
+fun deleteRecord(id: String) {
+    DriverManager.getConnection(url, user, password).use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery("DELETE FROM workers WHERE id=${id}")
+        }
+    }
+}
+
+fun createRecord(input: RequestData) {
+    DriverManager.getConnection(url, user, password).use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery("INSERT INTO workers (name, image, disk, ram, cpu, port, startup) " +
+                    "VALUES (${input.name}, ${input.image}, ${input.disk}, ${input.ram}, ${input.cpu}, ${input.port}, ${input.startup})")
+        }
+    }
+}
+
+fun updateRecord(input: RequestData) {
+    DriverManager.getConnection(url, user, password).use { connection ->
+        connection.createStatement().use { statement ->
+            statement.executeQuery(
+                "UPDATE workers SET (name=${input.name}, " +
+                    "image=${input.image}, " +
+                    "disk=${input.disk}, " +
+                    "ram=${input.ram}, " +
+                    "cpu=${input.cpu}, " +
+                    "port=${input.port}, " +
+                    "startup=${input.startup} WHERE id=${input.id})"
+            )
+        }
     }
 }

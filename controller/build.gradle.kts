@@ -23,6 +23,9 @@ repositories {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
     implementation("org.postgresql:postgresql:42.2.23")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.+")
     implementation("io.ktor:ktor-server-core-jvm")
