@@ -50,6 +50,9 @@ fun main() {
             get("/api/stats/{worker}") {
                 call.respondText(sendStats(call.parameters["worker"].toString()))
             }
+            get("/api/workers") {
+                call.respond(listWorkers().toString())
+            }
             post("/api/commands/create") {
                 val receivedDataJson = call.receive<String>()
                 val receivedData = Json.decodeFromString<RequestData>(receivedDataJson)
@@ -79,6 +82,32 @@ fun sendStats(worker: String): String {
 
     val response = connection.inputStream.bufferedReader().use { it.readText() }
     return response
+}
+
+fun listWorkers(): List<Map<String, Any>> {
+    DriverManager.getConnection(url, user, password).use { connection ->
+        connection.createStatement().use { statement ->
+            // Execute the query
+            val resultSet = statement.executeQuery("SELECT * FROM workers")
+
+            // Get metadata to retrieve column names
+            val metaData = resultSet.metaData
+            val columnCount = metaData.columnCount
+            val columnNames = (1..columnCount).map { metaData.getColumnName(it) }
+
+            // Process the results and convert to a list of Map<String, Any?>
+            val records = mutableListOf<Map<String, Any>>()
+            while (resultSet.next()) {
+                val record = mutableMapOf<String, Any>()
+                for (columnName in columnNames) {
+                    val columnValue = resultSet.getObject(columnName)
+                    record[columnName] = columnValue
+                }
+                records.add(record)
+            }
+            return records
+        }
+    }
 }
 
 fun deleteRecord(id: String) {
