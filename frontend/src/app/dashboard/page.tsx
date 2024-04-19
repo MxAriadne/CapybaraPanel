@@ -7,19 +7,14 @@ import { Button } from "@/components/ui/button";
 import { GoArrowLeft, GoArrowRight } from "react-icons/go";
 import { PiArchiveBox, PiPackage } from "react-icons/pi";
 import Link from "next/link";
+import PieChart from "./piechart";
 
 export default async function BucketDisplay() {
-  const tjwt = cookies().get("jwt")?.value;
-
-  if (tjwt === undefined) {
-    redirect("/login");
-  }
-  let jwt = await decryptTJWT(tjwt);
   return (
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] bg-gray-100/40 flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10 dark:bg-gray-800/40">
       <div className="max-w-6xl w-full mx-auto flex flex-col gap-4">
         <div className="grid gap-2">
-          <h1 className="text-2xl">Welcome, {jwt.payload.name}.</h1>
+          <h1 className="text-2xl">Welcome,</h1>
         </div>
         <div>Quick Actions</div>
         <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-12">
@@ -36,7 +31,6 @@ export default async function BucketDisplay() {
               <CardTitle>CPU statistics</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <Graph />
             </CardContent>
           </Card>
           <Card className="col-span-4">

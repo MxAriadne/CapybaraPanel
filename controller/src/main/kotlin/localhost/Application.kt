@@ -1,32 +1,36 @@
 package localhost
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.google.gson.Gson
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.plugins.cors.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.sql.DriverManager
 
 @Serializable
 data class RequestData(
-    val id: Int,
-    val name: String,
+    val id: Int?=null,
+    val name: String?="",
     val image: String,
-    val disk: String,
-    val ram: String,
-    val cpu: String,
-    val port: String,
-    val startup: String
+    val disk: Int?=-1,
+    val ram: Int?=-1,
+    val cpu: Int?=-1,
+    val port: Int?=-1,
+    val startup: String?=""
 )
 
 val url = "jdbc:postgresql://localhost:5432/"
@@ -37,6 +41,10 @@ val client = HttpClient(CIO)
 
 fun main() {
     embeddedServer(Netty, port = 6969) {
+        install(CORS) {
+            allowHost("*")
+            allowHeader(HttpHeaders.ContentType)
+        }
         routing {
             get("/api/commands/{name}/{command}") {
                 if (call.parameters["command"].equals("delete", true)) {
@@ -51,7 +59,8 @@ fun main() {
                 call.respondText(sendStats(call.parameters["worker"].toString()))
             }
             get("/api/workers") {
-                call.respond(listWorkers().toString())
+                val gson = Gson()
+                call.respond(gson.toJson(listWorkers()))
             }
             post("/api/commands/create") {
                 val receivedDataJson = call.receive<String>()
@@ -120,25 +129,39 @@ fun deleteRecord(id: String) {
 
 fun createRecord(input: RequestData) {
     DriverManager.getConnection(url, user, password).use { connection ->
-        connection.createStatement().use { statement ->
-            statement.executeQuery("INSERT INTO workers (name, image, disk, ram, cpu, port, startup) " +
-                    "VALUES (${input.name}, ${input.image}, ${input.disk}, ${input.ram}, ${input.cpu}, ${input.port}, ${input.startup})")
+        connection.prepareStatement("INSERT INTO workers (name, image, disk, ram, cpu, port, startup) VALUES (?, ?, ?, ?, ?, ?, ?)").use { statement ->
+            statement.setString(1, input.name)
+            statement.setString(2, input.image)
+            input.disk?.let { statement.setInt(3, it) }
+            input.ram?.let { statement.setInt(4, it) }
+            input.cpu?.let { statement.setInt(5, it) }
+            input.port?.let { statement.setInt(6, it) }
+            statement.setString(7, input.startup)
+            statement.executeUpdate()
         }
     }
 }
 
 fun updateRecord(input: RequestData) {
     DriverManager.getConnection(url, user, password).use { connection ->
-        connection.createStatement().use { statement ->
-            statement.executeQuery(
-                "UPDATE workers SET (name=${input.name}, " +
-                    "image=${input.image}, " +
-                    "disk=${input.disk}, " +
-                    "ram=${input.ram}, " +
-                    "cpu=${input.cpu}, " +
-                    "port=${input.port}, " +
-                    "startup=${input.startup} WHERE id=${input.id})"
-            )
+        connection.prepareStatement(
+            "UPDATE workers SET name=?, " +
+                    "image=?, " +
+                    "disk=?, " +
+                    "ram=?, " +
+                    "cpu=?, " +
+                    "port=?, " +
+                    "startup=? WHERE id=?"
+        ).use { statement ->
+            statement.setString(1, input.name)
+            statement.setString(2, input.image)
+            input.disk?.let { statement.setInt(3, it) }
+            input.ram?.let { statement.setInt(4, it) }
+            input.cpu?.let { statement.setInt(5, it) }
+            input.port?.let { statement.setInt(6, it) }
+            input.startup?.let { statement.setString(7, it) }
+            input.id?.let { statement.setInt(8, it) }
+            statement.executeUpdate()
         }
     }
 }
