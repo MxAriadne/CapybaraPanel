@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -41,7 +42,15 @@ func (h *Handler) GetNodeResourceUsage(c echo.Context) error {
 	// get the resource usage
 	v, _ := mem.VirtualMemory()
 	cCounts, _ := cpu.Counts(true)
-	c, _ :=  cpu.Percent(time.Duration(1)*time.Second), true)
+	cpu, _ := cpu.Percent(time.Duration(1)*time.Second, true)
+
+	// return the resource usage
+	return c.JSON(http.StatusOK, model.NodeResourceUsage{
+		RamUsage: v.UsedPercent,
+		CpuUsage: cpu[0],
+		RamTotal: float64(v.Total),
+		CpuTotal: float64(cCounts),
+	})
 
 	// return an error
 	return echo.NewHTTPError(http.StatusNotImplemented, fmt.Errorf("not implemented"))
@@ -97,9 +106,10 @@ func (h *Handler) GetContainerStats(c echo.Context) error {
 	}
 
 	stats := model.BasicContainerStatistics{
-		Name:  container_info.Name,
-		Id:    container_info.ID,
-		Image: container_info.Config.Image,
+		Name:   container_info.Name,
+		Id:     container_info.ID,
+		Image:  container_info.Config.Image,
+		Labels: container_info.Config.Labels,
 		//DiskUsage: res_usage.BlkioStats.
 		ResourceUsage: basicResUsage,
 		RamTotal:      float64(container_info.HostConfig.Memory),

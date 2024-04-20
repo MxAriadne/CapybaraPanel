@@ -17,6 +17,7 @@ type BasicContainerStatistics struct {
 	Name          string              `json:"name"`
 	Id            string              `json:"id"`
 	Image         string              `json:"image"`
+	Labels        map[string]string   `json:"labels"`
 	ResourceUsage *BasicResourceUsage `json:"resource_usage"`
 	RamTotal      float64             `json:"ram_total"`
 	CpuTotal      float64             `json:"cpu_total"`
