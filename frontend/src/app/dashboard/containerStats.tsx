@@ -33,7 +33,7 @@ export default function ContainerStatistics() {
   return (
     <Card className="col-span-3">
       <CardHeader>
-        <CardTitle>Node statistics</CardTitle>
+        <CardTitle>Container statistics</CardTitle>
       </CardHeader>
       <CardContent className="pl-6 h-96">
         {data ? (

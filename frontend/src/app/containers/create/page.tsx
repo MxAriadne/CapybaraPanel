@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { GoAlert } from "react-icons/go";
 import { PiArrowLeft, PiPackage } from "react-icons/pi";
 import { z } from "zod";
 
@@ -38,6 +39,7 @@ export const formSchema = z.object({
 export default function CreateContainer() {
   const [dockerImage, setDockerImage] = useState<string>("traefik/whoami");
   const [name, setName] = useState<string>("Container");
+  const [error, setError] = useState<string>("");
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {},
@@ -61,7 +63,13 @@ export default function CreateContainer() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(values),
-    }).then((res) => res.text()).then((res) => window.location.href = "http://localhost:6969/containers/narwhal-" + res);
+    }).then((res) => res.text()).then((res) => {
+      if(res.includes("Error") || res === "") {
+        setError(res = "" ? "Unknown error creating container" : res);
+      } else {
+      window.location.href = "/containers/narwhal-" + res
+      }
+    });
   }
 
   return (
@@ -185,6 +193,12 @@ export default function CreateContainer() {
                     )}
                   />
                 </div>
+                {error &&
+                <div id="error" className="bg-red-600 flex flex-row h-16 items-center gap-2 px-4 rounded-md mx-2">
+                  <GoAlert className="w-12 h-12 mb-0.5" />
+                  <div>{error}</div>
+                </div>
+                }
                 <div className="flex flex-col gap-2">
                   <Button size="lg" type="submit">
                     Submit

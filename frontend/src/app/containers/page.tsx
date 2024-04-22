@@ -30,7 +30,7 @@ export default function BucketDisplay() {
         <div className="grid gap-2">
           <h1 className="text-2xl">Your containers</h1> 
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
             {data?.map(
             (c: ContainerListElement) => <ContainerDisplay key={c.name+c.image+c.id} name={c.name} image={c.image} id={c.id} />
           )}

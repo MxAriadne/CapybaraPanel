@@ -19,7 +19,9 @@ import ContainerLogs from "./containerLogs";
 
 async function getData(cid: string): Promise<any> {
   // break down cid
-  const [name, sqid] = cid.split("-");
+  const namearr = cid.split("-");
+  const sqid = namearr.pop();
+  const name = namearr.join("-");
   // if name is "narwhal" then we dont need to fetch from db
   if (name === "narwhal") {
     const res = await fetch(`http://localhost:6969/api/commands/${sqid}`);
@@ -30,9 +32,8 @@ async function getData(cid: string): Promise<any> {
     };
     return toReturn;
   }
-  const dbRes = await fetch(
-    `http://localhost:6969/api/workers/${new Sqids().decode(sqid)}`
-  );
+  const dbRes = await fetch(`http://localhost:6969/api/workers/${sqid}`);
+  console.log(`http://localhost:6969/api/workers/${sqid}`);
   const dbData: DbResponse = await dbRes.json();
 
   const nodeRes = await fetch(
@@ -40,8 +41,20 @@ async function getData(cid: string): Promise<any> {
   );
   const nodeData: NodeInfo = await nodeRes.json();
 
-  nodeData.capybaraId = new Sqids().decode(sqid)[0].toString();
+  nodeData.capybaraId = sqid ?? "-1";
   return nodeData;
+}
+
+async function getImageData(image: string) {
+    let [author, name] = image.split("/");
+    if(!name) {
+        name = author;
+        author = "library";
+    }
+    let res = await fetch(`https://registry.hub.docker.com/v2/repositories/${author}/${name}/`);
+    let data = await res.json();
+    console.log(data);
+    return data;
 }
 
 export default async function BucketDisplay({
@@ -50,6 +63,8 @@ export default async function BucketDisplay({
   params: { slug: string };
 }) {
   const node: NodeInfo = await getData(params.slug);
+  const imageData = await getImageData(node.Config.Image);
+  const imageDesc = node.Config.Labels["org.opencontainers.image.description"] == undefined ? imageData.description : node.Config.Labels["org.opencontainers.image.description"];
   return (
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] bg-gray-100/40 flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10 dark:bg-gray-800/40">
       <div className="max-w-6xl w-full mx-auto flex flex-col gap-4">
@@ -63,7 +78,10 @@ export default async function BucketDisplay({
               </h3>
             </div>
           </div>
-          <ContainerControls containerId={node.Id} capybaraId={node.capybaraId??"-1"} />
+          <ContainerControls
+            containerId={node.Id}
+            capybaraId={node.capybaraId ?? "-1"}
+          />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -82,10 +100,22 @@ export default async function BucketDisplay({
               {node.State.Status.charAt(0).toUpperCase() +
                 node.State.Status.slice(1)}
             </p>
+            <p className="pb-2">
+              Entrypoint:{" "}
+              {node.Config.Entrypoint
+                ? node.Config.Entrypoint.join(" ")
+                : "None"}
+            </p>
+            <p className="pb-2">
+              PID:{" "}
+              {node.State.Pid
+                ? node.State.Pid
+                : "Container is not running"}
+            </p>
             <div className="">
-              Port bindings:
+              <div className="border-b border-gray-500 w-1/4 mb-2 ">Port bindings</div>
               {node.HostConfig.PortBindings ? (
-                <table className="table-auto border-collapse border-spacing-2 w-1/2 mt-2">
+                <table className="table-auto border-collapse border-spacing-2 w-1/2">
                   <thead>
                     <tr className="border-b border-gray-500">
                       <th className="pr-2 font-medium text-start">
@@ -99,7 +129,7 @@ export default async function BucketDisplay({
                       ([key, value]) => (
                         <tr key={key}>
                           <td className="">{key}</td>
-                          <td>{value.map((v) => v.HostPort).join(", ")}</td>
+                          <td>{value.map((v) => (<Link key={v.HostIp+v.HostPort} className="dark:text-sky-200 text-sky-600" href={`http://localhost:${v.HostPort}`}>{v.HostPort}</Link>))}</td>
                         </tr>
                       )
                     )}
@@ -120,15 +150,25 @@ export default async function BucketDisplay({
                 </p>
               </div>
               <p className="">
-                {node.Config.Labels["org.opencontainers.image.description"]}
+                {imageDesc}
               </p>
+              {node.Config.Labels["org.opencontainers.image.source"] ? (
+                <Link
+                  href={node.Config.Labels["org.opencontainers.image.source"]}
+                  className="dark:text-sky-200 text-sky-600 pt-1"
+                >
+                  <GoLink className="inline mb-1 mr-2" />
+                  {node.Config.Labels["org.opencontainers.image.source"]}
+                </Link>
+              ) :
               <Link
-                href={node.Config.Labels["org.opencontainers.image.source"]}
-                className="dark:text-sky-200 text-sky-600 pt-1"
-              >
-                <GoLink className="inline mb-1 mr-2" />
-                {node.Config.Labels["org.opencontainers.image.source"]}
-              </Link>
+              href={`https://hub.docker.com/r/${imageData.user}/${imageData.name}`}
+              className="dark:text-sky-200 text-sky-600 pt-1"
+            >
+              <GoLink className="inline mb-1 mr-2" />
+              https://hub.docker.com/r/{imageData.user}/{imageData.name}
+            </Link>
+              }
             </div>
           </div>
           <ContainerStatistics containerId={node.Id} />

@@ -21,7 +21,7 @@ export default function NodeStatistics() {
   return (
     <Card className="col-span-4">
       <CardHeader>
-        <CardTitle>Node statistics</CardTitle>
+        <CardTitle><div className="flex flex-col">Node statistics<div className="text-base font-normal text-gray-500">May include non-Capybara processes</div></div></CardTitle>
       </CardHeader>
       <CardContent className="pl-6 h-96">
         {data ? (

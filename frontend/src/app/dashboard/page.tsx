@@ -14,7 +14,7 @@ export default function BucketDisplay() {
         <div className="grid gap-2">
           <h1 className="text-2xl">Welcome, $firstName</h1>
         </div>
-        <div>Quick Actions</div>
+        <div className="-mb-3 text-gray-800 dark:text-gray-300">Quick Actions</div>
         <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-12">
           <Link href="/containers/create">
           <Button className="col-span-2">
