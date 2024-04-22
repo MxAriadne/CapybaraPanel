@@ -18,9 +18,9 @@ export type ContainerListElement = z.infer<typeof ContainerListElementSchema>;
 
 
 export default function BucketDisplay() {
-  const { data, error, isLoading } = useSWR("/api?path=workers", (url) =>
+  const { data, error, isLoading } = useSWR('http://localhost:6969/api/workers', (url) =>
     fetch(url).then((res) => res.json())
-  );
+  , { refreshInterval: 500000 });
   
   return (
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] bg-gray-100/40 flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10 dark:bg-gray-800/40">
@@ -29,8 +29,8 @@ export default function BucketDisplay() {
           <h1 className="text-2xl">Welcome,</h1> 
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-            {data?.data.map(
-            (c: ContainerListElement) => <ContainerDisplay key={c.name+c.image+c.id} name={c.name} image={c.image} />
+            {data?.map(
+            (c: ContainerListElement) => <ContainerDisplay key={c.name+c.image+c.id} name={c.name} image={c.image} id={c.id} />
           )}
         </div>
       </div>

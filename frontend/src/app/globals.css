@@ -14,6 +14,16 @@
   }
 }
 
+#scroller * {
+  overflow-anchor: none;
+}
+
+#anchor {
+  overflow-anchor: auto;
+  height: 1px;
+}
+
+
 [class='dark'] .breathing-gradient {
   animation: breathing 200s ease-in-out infinite;
   background: linear-gradient(45deg, #12070f, #08182c, #26092b, #1e0614);

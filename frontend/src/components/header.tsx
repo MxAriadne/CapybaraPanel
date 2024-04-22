@@ -48,8 +48,10 @@ export default function Header() {
     setHoveredNavItem(null);
   };
   return (
-    <div className="w-full border-b-2 dark:border-gray-800 pb-2">
-      <div className="h-24"></div>
+    <div className="w-full border-b-2 dark:border-gray-800 border-gray-300 bg-white dark:bg-black pb-2">
+      <div className="top-0 container mx-auto flex justify-between items-center dark:text-white text-black dark:border-gray-800 max-w-screen-2xl">
+        <div className="mt-12 text-5xl mb-2">Capybara Panel</div>
+      </div>
       <nav className=" sticky top-0 container mx-auto flex justify-between items-center dark:text-white text-black dark:border-gray-800 max-w-screen-2xl header-hide-scrollbar">
         <ul className="flex flex-1">
           {navItems.map((nav) => (
@@ -97,7 +99,6 @@ export default function Header() {
               Logout
             </DropdownMenuItem>
           </DropdownMenuContent>
-
         </DropdownMenu>
       </nav>
     </div>

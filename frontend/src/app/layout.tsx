@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Providers from "./providers";
 import { Figtree } from "next/font/google";
-import { GeistMono } from "geist/font/mono";
+import { GeistMono } from "geist/font/mono"
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 
@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${poly.className} dark:bg-black bg-gray-100 text-black dark:text-white transition-colors duration-750`}>
+      <body className={`${poly.className} ${GeistMono.variable} dark:bg-black bg-gray-100 text-black dark:text-white transition-colors duration-750`}>
         <ThemeProvider enableSystem={true} attribute="class">
           <Providers>{children}</Providers>
         </ThemeProvider>
