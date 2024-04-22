@@ -1,31 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-export const useScrollToBottom = (ref: HTMLDivElement) => {
-    useEffect(() => {
-        // if it's visible don't scroll
-      if (ref?.current?.offsetHeight > ref?.current?.scrollHeight)
-        ref?.current?.scrollTo(0, ref?.current?.scrollHeight);
-      //ref?.current?.querySelector(':scope > :last-child')?.scrollIntoView()
-    }, [ref])
-  }
-
+  
 export default function getLogs({containerId}: {containerId: string}) {
   const [data, setData] = useState<string[]>([]);
   const scrollContainer = useRef<null | HTMLDivElement>(null);
-  useScrollToBottom(scrollContainer)
 
   useEffect(() => {
     const asyncFetch = async () => {
       const it = await fetch(
-        `http://localhost:46449/containers/${containerId}/logs`
+        `http://localhost:46449/containers/some-postgres/logs`
       );
       it.text().then((data) => setData(data.split("\n")));
     };
 
     asyncFetch();
   }, []);
+
+  useEffect(() => {
+    const element = scrollContainer.current;
+    if (element) {
+      element.scrollTop = element.scrollHeight;
+    }
+  }, [data]);
 
   console.log(data);
 
@@ -35,8 +32,8 @@ export default function getLogs({containerId}: {containerId: string}) {
         <tbody>
           {data.map((d, i) => (
             <tr key={i} className="font-mono text-sm anchor flex">
-              <th className="text-gray-400 text-right align-text-top bg-gray-800 w-6">{i}</th>
-              <th className="font-normal text-left pl-2 pt-2">{d}</th>
+              <th className="text-gray-400 text-right align-text-top bg-gray-800 min-w-8 w-8">{i}</th>
+              <th className="font-normal text-left pl-2 pb-2">{d}</th>
             </tr>
           ))}
         </tbody>
