@@ -53,13 +53,9 @@ fun main() {
                 }
             }
             get("/api/commands/{name}/{command}") {
-                if (call.parameters["command"].equals("delete", true)) {
+                val response: HttpResponse =
                     client.get("http://localhost:46449/containers/${call.parameters["name"].toString()}/${call.parameters["command"].toString()}")
-                    deleteWorker(call.parameters["name"].toString())
-                } else {
-                    val response: HttpResponse = client.get("http://localhost:46449/containers/${call.parameters["name"].toString()}/${call.parameters["command"].toString()}")
-                    call.respondText(response.bodyAsText())
-                }
+                call.respondText(response.bodyAsText())
             }
             get("/api/node/{api_name}") {
                 if (!call.parameters["api_name"].isNullOrEmpty()) {
@@ -84,6 +80,31 @@ fun main() {
                 val gson = Gson()
                 call.respond(gson.toJson(call.parameters["worker"]?.let { it1 -> getWorker(it1.toInt()) }))
             }
+            delete("/api/workers/{worker}") {
+                // get the narwhalid of the worker
+                val worker = getWorker(call.parameters["worker"]?.toInt() ?: -1)
+                if(worker == null) {
+                    call.respondText(
+                        "Error with requesting worker - id not valid",
+                        ContentType.Any,
+                        HttpStatusCode.ExpectationFailed
+                    )
+                    return@delete
+                }
+                val narwhalId = worker.narwhalId
+                // call narwhal api to delete worker
+                val response = client.delete("http://localhost:46449/containers/${narwhalId}")
+                if (!response.status.isSuccess()) {
+                    call.respondText(
+                        "Error with deleting worker - narwhalid not valid",
+                        ContentType.Any,
+                        HttpStatusCode.ExpectationFailed
+                    )
+                    return@delete
+                }
+                deleteWorker(worker.id.toString())
+                call.respondText(response.bodyAsText())
+            }
             post("/api/commands/create") {
                 val receivedDataJson = call.receive<String>()
                 val receivedData = Json.decodeFromString<CreateWorker>(receivedDataJson)
@@ -94,6 +115,7 @@ fun main() {
                     call.respondText(resp, ContentType.Text.Plain, HttpStatusCode.OK)
                 }
             }
+
             post("/api/commands/update") {
                 val receivedDataJson = call.receive<String>()
                 val receivedData = Json.decodeFromString<BaseDatabaseSchema>(receivedDataJson)
