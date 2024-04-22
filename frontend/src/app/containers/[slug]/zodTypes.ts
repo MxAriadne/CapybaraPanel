@@ -88,6 +88,7 @@ export const NodeInfoSchema = z.object({
     "HostConfig": HostConfigSchema,
     "Mounts": z.array(z.any()),
     "Config": ConfigSchema,
+    "capybaraId": z.string().nullable(),
 });
 export type NodeInfo = z.infer<typeof NodeInfoSchema>;
 
@@ -102,7 +103,7 @@ export const ContainerStatsSchema = z.object({
     "name": z.string(),
     "id": z.string(),
     "image": z.string(),
-    "resource_usage": ResourceUsageSchema,
+    "resource_usage": ResourceUsageSchema.nullable(),
     "ram_total": z.number(),
     "cpu_total": z.number(),
     "start_cmd": z.string(),

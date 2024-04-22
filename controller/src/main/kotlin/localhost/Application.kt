@@ -38,6 +38,11 @@ fun main() {
         install(CORS) {
             allowHost("*")
             allowHeader(HttpHeaders.ContentType)
+            allowMethod(HttpMethod.Get)
+            allowMethod(HttpMethod.Post)
+            allowMethod(HttpMethod.Delete)
+            allowMethod(HttpMethod.Put)
+            allowMethod(HttpMethod.Patch)
         }
         routing {
             get("/api/commands/{api_name}") {
@@ -102,7 +107,7 @@ fun main() {
                     )
                     return@delete
                 }
-                deleteWorker(worker.id.toString())
+                deleteWorker(worker.id)
                 call.respondText(response.bodyAsText())
             }
             post("/api/commands/create") {

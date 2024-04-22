@@ -6,10 +6,11 @@ export default function getLogs({containerId}: {containerId: string}) {
   const [data, setData] = useState<string[]>([]);
   const scrollContainer = useRef<null | HTMLDivElement>(null);
 
+  // fetch initial logs
   useEffect(() => {
     const asyncFetch = async () => {
       const it = await fetch(
-        `http://localhost:46449/containers/some-postgres/logs`
+        `http://localhost:46449/containers/${containerId}/logs`
       );
       it.text().then((data) => setData(data.split("\n")));
     };

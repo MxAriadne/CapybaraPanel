@@ -14,13 +14,17 @@ import { Button } from "./ui/button";
 
 export default function ContainerControls({
   containerId,
+  capybaraId,
 }: {
   containerId: string;
+  capybaraId: string;
 }) {
   // use swr
   const { data } = useSWR<ContainerStats>(
     `http://localhost:6969/api/commands/${containerId}/stats`,
     (url: string | URL | Request) => fetch(url).then((res) => res.json())
+    , 
+    { refreshInterval: 5000, keepPreviousData: true }
   );
 
   return (
@@ -54,12 +58,15 @@ export default function ContainerControls({
         <div className="border border-l-0 pt-1 inline border-gray-400" />
         <Button
           variant="link"
-          disabled={!data?.is_running}
+          disabled={data?.is_running  || capybaraId == "-1"}
           className="group hover:dark:bg-red-950 hover:bg-red-200"
-          onClick={() => {
-            fetch(`http://localhost:6969/api/commands/${containerId}/start`, {
-              //method: "POST",
-            });
+          onClick={async () => {
+            let res = await fetch(`http://localhost:6969/api/workers/${capybaraId}`, {
+              method: "DELETE",
+            })
+            if (res.ok) {
+              window.location.href = "/containers";
+            }
           }}
         >
           <PiStopBold className="h-4 w-4 text-red-400 group-hover:text-red-500 disabled:text-gray-500 transition-all duration-300" />

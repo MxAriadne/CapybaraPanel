@@ -20,6 +20,16 @@ import ContainerLogs from "./containerLogs";
 async function getData(cid: string): Promise<any> {
   // break down cid
   const [name, sqid] = cid.split("-");
+  // if name is "narwhal" then we dont need to fetch from db
+  if (name === "narwhal") {
+    const res = await fetch(`http://localhost:6969/api/commands/${sqid}`);
+    const data: NodeInfo = await res.json();
+    let toReturn = {
+      ...data,
+      capybaraId: "-1",
+    };
+    return toReturn;
+  }
   const dbRes = await fetch(
     `http://localhost:6969/api/workers/${new Sqids().decode(sqid)}`
   );
@@ -29,6 +39,8 @@ async function getData(cid: string): Promise<any> {
     `http://localhost:6969/api/commands/${dbData.narwhalId}`
   );
   const nodeData: NodeInfo = await nodeRes.json();
+
+  nodeData.capybaraId = new Sqids().decode(sqid)[0].toString();
   return nodeData;
 }
 
@@ -38,7 +50,6 @@ export default async function BucketDisplay({
   params: { slug: string };
 }) {
   const node: NodeInfo = await getData(params.slug);
-  const pingIconColor = node.State.Status ? "text-sky-500" : "text-red-500";
   return (
     <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] bg-gray-100/40 flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10 dark:bg-gray-800/40">
       <div className="max-w-6xl w-full mx-auto flex flex-col gap-4">
@@ -52,7 +63,7 @@ export default async function BucketDisplay({
               </h3>
             </div>
           </div>
-          <ContainerControls containerId={node.Id} />
+          <ContainerControls containerId={node.Id} capybaraId={node.capybaraId??"-1"} />
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div>

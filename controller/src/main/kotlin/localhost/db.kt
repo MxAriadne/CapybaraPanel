@@ -30,10 +30,10 @@ data class CreateWorker(
     val startup: String?=null,
 )
 
-fun deleteWorker(workerName: String) {
+fun deleteWorker(workerName: Int) {
     val conn = DriverManager.getConnection(dotenv()["DB_URL"])
-    val statement = conn.prepareStatement("DELETE FROM workers WHERE name = ?")
-    statement.setString(1, workerName)
+    val statement = conn.prepareStatement("DELETE FROM workers WHERE id = ?")
+    statement.setInt(1, workerName)
     statement.execute()
 }
 

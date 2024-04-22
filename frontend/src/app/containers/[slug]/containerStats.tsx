@@ -6,21 +6,23 @@ import { SimpleStatsLabel } from "@/components/SimpleStatsLabel";
 import { NodeStats } from "@/app/dashboard/nodeStats";
 import { useEffect, useState } from "react";
 
-function formatBytes(bytes:number) {
-    var marker = 1024; // Change to 1000 if required
-    var decimal = 2; // Change as required
-    var kiloBytes = marker; // One Kilobyte is 1024 bytes
-    var megaBytes = marker * marker; // One MB is 1024 KB
-    var gigaBytes = marker * marker * marker; // One GB is 1024 MB
-  
-    // return bytes if less than a KB
-    if(bytes < kiloBytes) return bytes + "Bytes";
-    // return KB if less than a MB
-    else if(bytes < megaBytes) return(bytes / kiloBytes).toFixed(decimal) + "KB";
-    // return MB if less than a GB
-    else if(bytes < gigaBytes) return(bytes / megaBytes).toFixed(decimal) + "MB";
-    // return GB if less than a TB
-    else return(bytes / gigaBytes).toFixed(decimal) + " GB";
+function formatBytes(bytes: number) {
+  var marker = 1024; // Change to 1000 if required
+  var decimal = 2; // Change as required
+  var kiloBytes = marker; // One Kilobyte is 1024 bytes
+  var megaBytes = marker * marker; // One MB is 1024 KB
+  var gigaBytes = marker * marker * marker; // One GB is 1024 MB
+
+  // return bytes if less than a KB
+  if (bytes < kiloBytes) return bytes + "Bytes";
+  // return KB if less than a MB
+  else if (bytes < megaBytes)
+    return (bytes / kiloBytes).toFixed(decimal) + "KB";
+  // return MB if less than a GB
+  else if (bytes < gigaBytes)
+    return (bytes / megaBytes).toFixed(decimal) + "MB";
+  // return GB if less than a TB
+  else return (bytes / gigaBytes).toFixed(decimal) + " GB";
 }
 export default function ContainerStatistics({
   containerId,
@@ -40,9 +42,10 @@ export default function ContainerStatistics({
 
   return (
     <div>
-        <div className="text-3xl my-4">Container Statistics</div>
-        {data ? (
-          <>
+      <div className="text-3xl my-4">Container Statistics</div>
+      {data ? (
+        <>
+          {data.resource_usage !== null ? (
             <SimpleStatsLabel
               value={`${(
                 data.resource_usage.cpu_usage /
@@ -52,28 +55,39 @@ export default function ContainerStatistics({
               ).toFixed(2)}%`}
               label="CPU Usage"
             />
+          ):
+            <SimpleStatsLabel
+              value={`Node is offline`}
+              label="CPU Usage"
+            />}
 
+          <SimpleStatsLabel
+            value={`${
+              data.cpu_total == 0 ? nodeData?.cpu_total ?? 0 : data.cpu_total / 1000000000
+            }`}
+            label="Total vCores"
+          />
+          {data.resource_usage !== null ? (
             <SimpleStatsLabel
-              value={`${
-                data.cpu_total == 0 ? nodeData?.cpu_total : data.cpu_total
-              }`}
-              label="Total vCores"
-            />
-            <SimpleStatsLabel
-              value={`${
-                formatBytes(data.resource_usage.ram_usage)
-              }`}
+              value={`${formatBytes(data.resource_usage.ram_usage)}`}
               label="RAM Usage"
             />
-
+          ) :
             <SimpleStatsLabel
-              value={`${formatBytes(data.ram_total == 0 ? nodeData?.ram_total ?? 0 : (data.ram_total))}`}
-              label="Total RAM"
-            />
-          </>
-        ) : (
-          <div className="text-5xl pl-4">Loading...</div>
-        )}
-</div>
+              value={`Node is offline`}
+              label="RAM Usage"
+            />}
+
+          <SimpleStatsLabel
+            value={`${formatBytes(
+              data.ram_total == 0 ? nodeData?.ram_total ?? 0 : data.ram_total
+            )}`}
+            label="Total RAM"
+          />
+        </>
+      ) : (
+        <div className="text-5xl pl-4">Loading...</div>
+      )}
+    </div>
   );
 }
