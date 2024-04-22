@@ -67,7 +67,7 @@ suspend fun createWorker(worker: CreateWorker): NodeCreateResponse? {
     hostPort?.let {
         portBinding[it[0]] = listOf(it[1].toLong())
     }
-    val config = Config(portBindings = portBinding.toMap(), resources = Resources(worker.ram?.toLong(), worker.cpu?.toLong()), autoRemove = true)
+    val config = Config(portBindings = portBinding.toMap(), resources = Resources(worker.ram?.toLong(), worker.cpu?.toLong()), autoRemove = false)
     val create = NodeCreate(worker.image, cmd, worker.name!!, config, needsGPU = false, startOnCreate = true)
     try {
         // Actually create the worker
